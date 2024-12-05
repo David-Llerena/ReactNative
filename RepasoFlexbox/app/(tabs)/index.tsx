@@ -69,10 +69,10 @@ const styles = StyleSheet.create({
   },
   container2: {
     flex: 1,
-    backgroundColor: 'skyblue',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    backgroundColor: '#fff',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'stretch',
   },
   container3: {
     flex: 6,
