@@ -1,5 +1,5 @@
-import React, { useState,useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 
 const initialProductos = [
   { id: 100, nombre: 'Doritos', categoria: 'Snacks', precioCompra: 0.40, precioVenta: 0.45 },
@@ -17,6 +17,8 @@ export default function HomeScreen() {
   const [txtPrecioCompra, setTxtPrecioCompra] = useState('');
   const [txtPrecioVenta, setTxtPrecioVenta] = useState('');
   const [numProductos, setNumProductos] = useState(initialProductos.length);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [productoAEliminar, setProductoAEliminar] = useState(null);
 
   useEffect(() => {
     setNumProductos(productos.length);
@@ -82,9 +84,16 @@ export default function HomeScreen() {
     limpiarCampos();
   };
 
-  const eliminarProducto = (id) => {
-    const productosActualizados = productos.filter((producto) => producto.id !== id);
+  const confirmarEliminarProducto = (producto) => {
+    setProductoAEliminar(producto);
+    setModalVisible(true);
+  };
+
+  const eliminarProducto = () => {
+    const productosActualizados = productos.filter((producto) => producto.id !== productoAEliminar.id);
     setProductos(productosActualizados);
+    setModalVisible(false);
+    setProductoAEliminar(null);
   };
 
   return (
@@ -130,12 +139,14 @@ export default function HomeScreen() {
           <Button 
             title="NUEVO" 
             onPress={handleNuevoProducto} 
+            color="#007BFF" 
           />
         </View>
         <View style={styles.button}>
           <Button 
             title="GUARDAR" 
             onPress={guardarProducto} 
+            color="#28a745" 
           />
         </View>
       </View>
@@ -145,39 +156,57 @@ export default function HomeScreen() {
       <FlatList
         data={productos}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({item}) => (
-          <View style={styles.itemContainer}>
-            <View style={styles.itemIndice}>
-              <Text>{item.id}</Text>
+        renderItem={({ item }) => (
+          <TouchableOpacity onPress={() => editarProducto(item)}>
+            <View style={styles.itemContainer}>
+              <Text style={styles.nombre}>
+                {item.nombre} <Text style={styles.categoria}>({item.categoria})</Text>
+              </Text>
+              <Text style={styles.precioVenta}>USD {item.precioVenta.toFixed(2)}</Text>
+              <View style={styles.itemBotones}>
+                <Button
+                  title="X"
+                  color="red"
+                  onPress={() => confirmarEliminarProducto(item)}
+                />
+              </View>
             </View>
-            <View style={styles.itemContenido}>
-              <Text style={styles.nombreText}>{item.nombre}</Text>
-              <Text style={styles.categoriaText}>({item.categoria})</Text>
-            </View>
-            <View style={styles.itemPrecio}>
-              <Text style={styles.precioText}>${item.precioVenta.toFixed(2)}</Text>
-            </View>
-            <View style={styles.itemBotones}>
+          </TouchableOpacity>
+        )}
+      />
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>¿Está seguro que quiere eliminar?</Text>
+            <View style={styles.modalButtonContainer}>
               <Button
-                title="E"
-                color="green"
-                onPress={() => editarProducto(item)}
+                title="Cancelar"
+                onPress={() => setModalVisible(false)}
+                color="#888"
               />
               <Button
-                title="X"
+                title="Aceptar"
+                onPress={eliminarProducto}
                 color="red"
-                onPress={() => eliminarProducto(item.id)}
               />
             </View>
           </View>
-        )}
-      />
+        </View>
+      </Modal>
       <View style={styles.areaPie}>
-        <Text style={styles.titleSec}>Autor: David Llerena</Text>
+        <Text>Autor: David Llerena</Text>
       </View>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -185,32 +214,33 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
+    color: '#007BFF',
+    textAlign: 'center',
     marginBottom: 20,
-    marginTop: 30,
-    marginHorizontal: 100,
-  },
-  titleSec: {
-    fontSize: 14,
-    marginBottom: 10,
-    marginHorizontal: 10,
   },
   inputContainer: {
-    marginBottom: 5,
+    marginBottom: 20,
   },
   input: {
     height: 40,
     borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 5,
+    borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 20,
   },
   button: {
     flex: 1,
@@ -218,49 +248,76 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
   },
+  titleSec: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
   itemContainer: {
-    backgroundColor: '#fff',
+    marginBottom: 20,
+    padding: 15,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  itemIndice: {
+  nombre: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  categoria: {
+    fontSize: 18,
+    color: '#888',
+  },
+  precioVenta: {
+    fontSize: 18,
+    color: '#007BFF',
+    marginTop: 5,
+  },
+  itemBotones: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  itemContenido: {
-    flex: 4,
-    paddingHorizontal: 10,
-  },
-  nombreText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  categoriaText: {
-    fontSize: 14,
-    color: '#888',
-  },
-  itemBotones: {
-    flex: 2,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  modalView: {
+    width: 300,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  itemPrecio: {
-    flex: 2,
-    alignItems: 'flex-end',
-    marginRight: 10,
+  modalText: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  precioText: {
-    fontSize: 16,
-    color: '#007BFF',
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
   },
   areaPie: {
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end', }
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+  },
 });
