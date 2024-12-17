@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import "react-native-gesture-handler";
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 const initialProductos = [
   { id: 100, nombre: 'Doritos', categoria: 'Snacks', precioCompra: 0.40, precioVenta: 0.45 },
@@ -8,6 +11,11 @@ const initialProductos = [
   { id: 103, nombre: 'Agua', categoria: 'Bebidas', precioCompra: 0.20, precioVenta: 0.25 },
   { id: 104, nombre: 'Chicles', categoria: 'Dulces', precioCompra: 0.10, precioVenta: 0.15 },
 ];
+
+const Drawer=createDrawerNavigator();
+const LoginStack=createNativeStackNavigator();
+const Stack = createNativeStackNavigator();
+
 
 export default function HomeScreen() {
   const [productos, setProductos] = useState(initialProductos);
@@ -18,7 +26,7 @@ export default function HomeScreen() {
   const [txtPrecioVenta, setTxtPrecioVenta] = useState('');
   const [numProductos, setNumProductos] = useState(initialProductos.length);
   const [modalVisible, setModalVisible] = useState(false);
-  const [productoAEliminar, setProductoAEliminar] = useState(null);
+  const [productoAEliminar, setProductoAEliminar] = useState<{ id: number; nombre: string; categoria: string; precioCompra: number; precioVenta: number } | null>(null);
 
   useEffect(() => {
     setNumProductos(productos.length);
@@ -61,7 +69,7 @@ export default function HomeScreen() {
     setTxtPrecioVenta('');
   };
 
-  const editarProducto = (producto) => {
+  const editarProducto = (producto: { id: number; nombre: string; categoria: string; precioCompra: number; precioVenta: number }) => {
     setTxtCodigo(producto.id.toString());
     setTxtNombre(producto.nombre);
     setTxtCategoria(producto.categoria);
@@ -84,16 +92,18 @@ export default function HomeScreen() {
     limpiarCampos();
   };
 
-  const confirmarEliminarProducto = (producto) => {
+  const confirmarEliminarProducto = (producto: { id: number; nombre: string; categoria: string; precioCompra: number; precioVenta: number }) => {
     setProductoAEliminar(producto);
     setModalVisible(true);
   };
 
   const eliminarProducto = () => {
-    const productosActualizados = productos.filter((producto) => producto.id !== productoAEliminar.id);
-    setProductos(productosActualizados);
-    setModalVisible(false);
-    setProductoAEliminar(null);
+    if (productoAEliminar !== null) {
+      const productosActualizados = productos.filter((producto) => producto.id !== productoAEliminar.id);
+      setProductos(productosActualizados);
+      setModalVisible(false);
+      setProductoAEliminar(null);
+    }
   };
 
   return (
@@ -159,10 +169,11 @@ export default function HomeScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => editarProducto(item)}>
             <View style={styles.itemContainer}>
-              <Text style={styles.nombre}>
-                {item.nombre} <Text style={styles.categoria}>({item.categoria})</Text>
-              </Text>
-              <Text style={styles.precioVenta}>USD {item.precioVenta.toFixed(2)}</Text>
+              <View style={styles.itemInfo}>
+                <Text style={styles.nombre}>{item.nombre}</Text>
+                <Text style={styles.categoria}>({item.categoria})</Text>
+                <Text style={styles.precioVenta}>USD {item.precioVenta.toFixed(2)}</Text>
+              </View>
               <View style={styles.itemBotones}>
                 <Button
                   title="X"
@@ -247,6 +258,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     borderRadius: 10,
     overflow: 'hidden',
+    
   },
   titleSec: {
     fontSize: 20,
@@ -256,8 +268,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   itemContainer: {
-    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 15,
+    marginVertical: 8,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 10,
@@ -268,24 +283,29 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
+  itemInfo: {
+    flex: 3,
+  },
   nombre: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
   categoria: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#888',
   },
   precioVenta: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#007BFF',
     marginTop: 5,
   },
   itemBotones: {
+    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
+    justifyContent: 'flex-end',
+    padding: 5,
+  
   },
   modalContainer: {
     flex: 1,
